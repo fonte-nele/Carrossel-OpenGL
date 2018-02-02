@@ -38,6 +38,7 @@ typedef glm::vec4  point4;
 
 GLuint Model, View, Projection, isLightSource;
 GLuint program;
+GLuint textura1, textura2;
 
 Cubo cubo;
 Cilindro cilindro;
@@ -395,6 +396,7 @@ void chao()
 {
     // chao (placa de dimens�es 80x0.3x80, com face superior em y=0.0)
     glm::mat4 matChao;
+    glBindTexture(GL_TEXTURE_2D, textura1);
     matChao = glm::translate(matChao, glm::vec3(0.0, -0.15, 0.0));
     matChao = glm::scale(matChao, glm::vec3(80.0, 0.3, 80.0));
     glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(matChao));
@@ -438,7 +440,6 @@ void luminarias(glm::mat4 posicao)
     }
     else
     {
-      //cout << "Aa";
       ilu.matDiffuse(1.0, 1.0, 1.0, 1.0);
     }
     esfera.draw();
@@ -448,6 +449,7 @@ void luminarias(glm::mat4 posicao)
 void exibe( void )
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
 
     chao();
     glm::mat4 posicaoCarrosel;
@@ -471,6 +473,7 @@ void exibe( void )
     desenhaFonteDeLuz(light_position1, 0.5);
     desenhaFonteDeLuz(light_position2, 0.5);
 
+    glFlush();
     glutSwapBuffers();
 }
 
@@ -603,6 +606,25 @@ void init()
 
     glUniform1f( glGetUniformLocation(program, "Shininess"),
      material_shininess );
+
+    // Criar objetos de textura
+    BMPClass bmp; //<<<textura
+    BMPLoad("grama.bmp",bmp); //<<<textura
+
+    glGenTextures(1, &textura1); //<<<textura
+    glBindTexture(GL_TEXTURE_2D, textura1); //<<<textura
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,bmp.width,bmp.height,0,GL_RGB,GL_UNSIGNED_BYTE,bmp.bytes);   
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
+
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
+
+    GLuint tex_loc; //<<<textura
+    tex_loc = glGetUniformLocation(program, "texMap"); //<<<textura
+    glUniform1i(tex_loc, 0);
+    glEnable(GL_TEXTURE_2D);
 
     // Retrieve transformation uniform variable locations
     Model = glGetUniformLocation( program, "Model" );
