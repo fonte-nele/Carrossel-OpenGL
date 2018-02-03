@@ -13,6 +13,7 @@
  *       'k': deslocamento para baixo.
  *       'j': deslocamento lateral para esquerda.
  *       'l': deslocamento lateral para direito.
+ *       'c': acender/apagar luz poste das luminarias.
  */
 /*
   Link do video para detalhamento do carrossel:
@@ -23,7 +24,6 @@
 #include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
 #include <glm/gtc/type_ptr.hpp> // glm::value_ptr
 // arquivo com recursos auxiliares (do livro texto)
-
 using namespace std;
 #include "Angel_util.h"
 #include "Cilindro.cpp"
@@ -396,7 +396,7 @@ void chao()
 {
     // chao (placa de dimens�es 80x0.3x80, com face superior em y=0.0)
     glm::mat4 matChao;
-    glBindTexture(GL_TEXTURE_2D, textura1);
+    //glBindTexture(GL_TEXTURE_2D, textura1);
     matChao = glm::translate(matChao, glm::vec3(0.0, -0.15, 0.0));
     matChao = glm::scale(matChao, glm::vec3(80.0, 0.3, 80.0));
     glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(matChao));
@@ -409,17 +409,16 @@ void lua(glm::vec4 pos, float r)
     luz = glm::translate(luz, glm::vec3(pos.x,pos.y,pos.z));
     luz = glm::scale(luz, glm::vec3(r,r,r));
     glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(luz));
-    //glUniform1i(isLightSource, true);
+    ilu.lightPositions(light_position1,light_position2);
     ilu.matDiffuse(1.0, 1.0, 1.0, 1.0);
     esfera.draw();
     ilu.stdMaterial();
-    //glUniform1i(isLightSource, false);
 }
 
 void luminarias(glm::mat4 posicao)
 {
-    float altLum = 25.0;
-    float diamLum = 0.6;  //diametro do mastro
+    float altLum = 25.0;  // Altura luminaria
+    float diamLum = 0.5;  // Diametro da luminaria
     glm::mat4 matLum(posicao);
     matLum = glm::rotate(matLum, glm::radians(-90.0f), glm::vec3(1.0f,0.0f,0.0f));
     matLum = glm::scale(matLum, glm::vec3(diamLum,diamLum,altLum));
@@ -433,16 +432,42 @@ void luminarias(glm::mat4 posicao)
     matGlobo = glm::rotate(matGlobo, glm::radians(-90.0f), glm::vec3(1.0f,0.0f,0.0f));
     matGlobo = glm::scale(matGlobo, glm::vec3(1.5,1.5,1.5));
     glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(matGlobo));
-    
     if(!branco)
-    {
       ilu.matDiffuse(1.0, 1.0, 0.0, 1.0);
-    }
     else
-    {
       ilu.matDiffuse(1.0, 1.0, 1.0, 1.0);
-    }
     esfera.draw();
+    ilu.stdMaterial();
+}
+
+void outdoor(glm::mat4 posicao)
+{
+    float altOut = 24.0;  // Altura outdoor
+    float diamOut = 0.35;  // Diametro da outdoor
+    glm::mat4 matOut(posicao);
+    matOut = glm::rotate(matOut, glm::radians(-90.0f), glm::vec3(1.0f,0.0f,0.0f));
+    matOut = glm::scale(matOut, glm::vec3(diamOut,diamOut,altOut));
+    glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(matOut));
+    ilu.matDiffuse(1.0, 0.0, 0.0, 1.0);
+    cilindro.desenhar();
+    ilu.stdMaterial();
+
+    glm::mat4 matOut2(posicao);
+    matOut2 = glm::translate(matOut2, glm::vec3(-21.0,0.0,0.0));
+    matOut2 = glm::rotate(matOut2, glm::radians(-90.0f), glm::vec3(1.0f,0.0f,0.0f));
+    matOut2 = glm::scale(matOut2, glm::vec3(diamOut,diamOut,altOut));
+    glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(matOut2));
+    ilu.matDiffuse(1.0, 0.0, 0.0, 1.0);
+    cilindro.desenhar();
+    ilu.stdMaterial();
+
+    glm::mat4 matPlaca;
+    matPlaca = glm::translate(matPlaca, glm::vec3(-26.5,18.0,-35.0));
+    matPlaca = glm::rotate(matPlaca, glm::radians(-90.0f), glm::vec3(1.0f,0.0f,0.0f));
+    matPlaca = glm::scale(matPlaca, glm::vec3(21.0,0.5,12.0));
+    glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(matPlaca));
+    ilu.matDiffuse(1.0, 0.0, 0.0, 1.0);
+    cubo.desenhar();
     ilu.stdMaterial();
 }
 
@@ -469,6 +494,10 @@ void exibe( void )
     luminarias(posLum);
     posLum = glm::translate(posLum, glm::vec3(-60.0,0.0,70.0));
     luminarias(posLum);
+
+    glm::mat4 posOutdoor;
+    posOutdoor = glm::translate(posOutdoor, glm::vec3(-16.0,0.0,-35.0));
+    outdoor(posOutdoor);
 
     desenhaFonteDeLuz(light_position1, 0.5);
     desenhaFonteDeLuz(light_position2, 0.5);
@@ -543,7 +572,7 @@ void teclado( unsigned char tecla, int x, int y )
       exit( EXIT_SUCCESS );
     else
     {
-        if(tecla == 'c')
+        if(tecla == 'c')  // Acender/apagar luz das luminarias! 
             if(!branco)
               branco = true;
             else
@@ -610,13 +639,11 @@ void init()
     // Criar objetos de textura
     BMPClass bmp; //<<<textura
     BMPLoad("grama.bmp",bmp); //<<<textura
-
     glGenTextures(1, &textura1); //<<<textura
     glBindTexture(GL_TEXTURE_2D, textura1); //<<<textura
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,bmp.width,bmp.height,0,GL_RGB,GL_UNSIGNED_BYTE,bmp.bytes);   
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,bmp.width,bmp.height,0,GL_RGB,GL_UNSIGNED_BYTE,bmp.bytes);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
-
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
@@ -624,7 +651,7 @@ void init()
     GLuint tex_loc; //<<<textura
     tex_loc = glGetUniformLocation(program, "texMap"); //<<<textura
     glUniform1i(tex_loc, 0);
-    glEnable(GL_TEXTURE_2D);
+    //glEnable(GL_TEXTURE_2D);
 
     // Retrieve transformation uniform variable locations
     Model = glGetUniformLocation( program, "Model" );
