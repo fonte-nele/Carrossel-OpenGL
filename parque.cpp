@@ -38,7 +38,8 @@ typedef glm::vec4  point4;
 
 GLuint Model, View, Projection, isLightSource;
 GLuint program;
-GLuint textura1, textura2;
+GLuint textura1, textura2, textura3;  // Imagens com a textura carregada!
+GLuint withTexture; // Variavel booleana para aplicar textura!
 
 Cubo cubo;
 Cilindro cilindro;
@@ -107,10 +108,13 @@ void sustentacao(glm::mat4 posicao)
     // plataforma (placa de dimens�es 40x0.8x22, com face inferior em y=0.0)
     float altPlat=0.8;
     glm::mat4 matPlat(posicao);
+    glUniform1i(withTexture, true);
+    glBindTexture(GL_TEXTURE_2D, textura1);
     matPlat = glm::translate(matPlat, glm::vec3(0.0, altPlat/2.0, 0.0));
     matPlat = glm::scale(matPlat, glm::vec3(40.0, 0.8, 28.0));
     glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(matPlat));
     cubo.desenhar();
+    glUniform1i(withTexture, false);
 
     // mastros sustentacao skate
     float altMastro = 15.0;
@@ -347,13 +351,16 @@ void carrossel(glm::mat4 posicao)
     angCar += 0.001;
     if( angCar > 2.0*M_PI ) angCar -= 2.0*M_PI;
 
-    // plataforma (placa de dimens�es 21x0.8x21, com face inferior em y=0.0)
+    // plataforma (placa de dimensoes 21x0.8x21, com face inferior em y=0.0)
     float altPlat=0.8;
     glm::mat4 matPlat(posicao);
+    glUniform1i(withTexture, true);
+    glBindTexture(GL_TEXTURE_2D, textura1);
     matPlat = glm::translate(matPlat, glm::vec3(0.0, altPlat/2.0, 0.0));
     matPlat = glm::scale(matPlat, glm::vec3(21.0, 0.8, 21.0));
     glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(matPlat));
     cubo.desenhar();
+    glUniform1i(withTexture, false);
 
     // mastro (eixo) do carrossel
     float altMastro = 10.0;
@@ -394,21 +401,23 @@ void carrossel(glm::mat4 posicao)
 
 void chao()
 {
-    // chao (placa de dimens�es 80x0.3x80, com face superior em y=0.0)
+    // chao (placa de dimensoes 80x0.3x80, com face superior em y=0.0)
     glm::mat4 matChao;
-    //glBindTexture(GL_TEXTURE_2D, textura1);
+    glUniform1i(withTexture, true);
+    glBindTexture(GL_TEXTURE_2D, textura2);
     matChao = glm::translate(matChao, glm::vec3(0.0, -0.15, 0.0));
     matChao = glm::scale(matChao, glm::vec3(80.0, 0.3, 80.0));
     glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(matChao));
     cubo.desenhar();
+    glUniform1i(withTexture, false);
 }
 
 void lua(glm::vec4 pos, float r)
 {   // desenha uma esfera de raio r, representando a fonte de luz
-    glm::mat4 luz;
-    luz = glm::translate(luz, glm::vec3(pos.x,pos.y,pos.z));
-    luz = glm::scale(luz, glm::vec3(r,r,r));
-    glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(luz));
+    glm::mat4 lua1;
+    lua1 = glm::translate(lua1, glm::vec3(pos.x,pos.y,pos.z));
+    lua1 = glm::scale(lua1, glm::vec3(r,r,r));
+    glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(lua1));
     ilu.lightPositions(light_position1,light_position2);
     ilu.matDiffuse(1.0, 1.0, 1.0, 1.0);
     esfera.draw();
@@ -448,33 +457,29 @@ void outdoor(glm::mat4 posicao)
     matOut = glm::rotate(matOut, glm::radians(-90.0f), glm::vec3(1.0f,0.0f,0.0f));
     matOut = glm::scale(matOut, glm::vec3(diamOut,diamOut,altOut));
     glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(matOut));
-    ilu.matDiffuse(1.0, 0.0, 0.0, 1.0);
     cilindro.desenhar();
-    ilu.stdMaterial();
 
     glm::mat4 matOut2(posicao);
     matOut2 = glm::translate(matOut2, glm::vec3(-21.0,0.0,0.0));
     matOut2 = glm::rotate(matOut2, glm::radians(-90.0f), glm::vec3(1.0f,0.0f,0.0f));
     matOut2 = glm::scale(matOut2, glm::vec3(diamOut,diamOut,altOut));
     glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(matOut2));
-    ilu.matDiffuse(1.0, 0.0, 0.0, 1.0);
     cilindro.desenhar();
-    ilu.stdMaterial();
 
     glm::mat4 matPlaca;
+    glUniform1i(withTexture, true);
+    glBindTexture(GL_TEXTURE_2D, textura3);
     matPlaca = glm::translate(matPlaca, glm::vec3(-26.5,18.0,-35.0));
     matPlaca = glm::rotate(matPlaca, glm::radians(-90.0f), glm::vec3(1.0f,0.0f,0.0f));
     matPlaca = glm::scale(matPlaca, glm::vec3(21.0,0.5,12.0));
     glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(matPlaca));
-    ilu.matDiffuse(1.0, 0.0, 0.0, 1.0);
     cubo.desenhar();
-    ilu.stdMaterial();
+    glUniform1i(withTexture, false);
 }
 
 void exibe( void )
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
 
     chao();
     glm::mat4 posicaoCarrosel;
@@ -565,7 +570,6 @@ void posicionaCamera(unsigned char tecla) {
    glutPostRedisplay();
 }
 
-
 void teclado( unsigned char tecla, int x, int y )
 {
     if (tecla==033)   // Escape Key
@@ -594,11 +598,11 @@ void idle( void )
 void init()
 {
     // Load shaders and use the resulting shader program
-    program = InitShader( "genericoVshader.glsl",
-                          "genericoFshader.glsl" );
+    program = InitShader( "genericoVshaderTextura.glsl",
+                          "genericoFshaderTextura.glsl" );
     glUseProgram( program );
 
-    cubo.criaCubo(program, "vPosition", "vNormal");
+    cubo.criaCubo(program, "vPosition", "vNormal", "vTexCoords");
     cilindro.criaCilindro(program, "vPosition", "vNormal");
     cone.criaCone(program, "vPosition", "vNormal");
     esfera.init(program, "vPosition", "vNormal");
@@ -637,21 +641,36 @@ void init()
      material_shininess );
 
     // Criar objetos de textura
+    withTexture = glGetUniformLocation(program, "withTexture"); // Variável Booleana para aplicar textura!
     BMPClass bmp; //<<<textura
     BMPLoad("grama.bmp",bmp); //<<<textura
+
     glGenTextures(1, &textura1); //<<<textura
     glBindTexture(GL_TEXTURE_2D, textura1); //<<<textura
     glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,bmp.width,bmp.height,0,GL_RGB,GL_UNSIGNED_BYTE,bmp.bytes);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
 
+    BMPLoad("test.bmp",bmp); //<<<textura
+
+    glGenTextures(1, &textura2); //<<<textura
+    glBindTexture(GL_TEXTURE_2D, textura2); //<<<textura
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,bmp.width,bmp.height,0,GL_RGB,GL_UNSIGNED_BYTE,bmp.bytes);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
+
+    BMPLoad("par.bmp",bmp); //<<<textura
+
+    glGenTextures(1, &textura3); //<<<textura
+    glBindTexture(GL_TEXTURE_2D, textura3); //<<<textura
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,bmp.width,bmp.height,0,GL_RGB,GL_UNSIGNED_BYTE,bmp.bytes);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
+
+    
     GLuint tex_loc; //<<<textura
     tex_loc = glGetUniformLocation(program, "texMap"); //<<<textura
     glUniform1i(tex_loc, 0);
-    //glEnable(GL_TEXTURE_2D);
 
     // Retrieve transformation uniform variable locations
     Model = glGetUniformLocation( program, "Model" );
@@ -670,7 +689,7 @@ void init()
     glUniformMatrix4fv(Projection,1,GL_FALSE, glm::value_ptr(proj));
     glUniform1i(isLightSource, false);
 
-    posicionaCamera('d'); //posi��o default
+    posicionaCamera('d'); //posicao default
 } //init
 
 //----------------------------------------------------------------------------
@@ -681,7 +700,6 @@ int main( int argc, char **argv )
     glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH );
     glutInitWindowSize( 512, 512 );
     glutCreateWindow( "Parque" );
-
     glewInit();
 
     init();
