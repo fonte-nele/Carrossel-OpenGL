@@ -413,14 +413,16 @@ void chao()
 }
 
 void lua(glm::vec4 pos, float r)
-{   // desenha uma esfera de raio r, representando a fonte de luz
+{   // desenha a lua, representando uma fonte de luz
     glm::mat4 lua1;
     lua1 = glm::translate(lua1, glm::vec3(pos.x,pos.y,pos.z));
     lua1 = glm::scale(lua1, glm::vec3(r,r,r));
     glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(lua1));
     ilu.lightPositions(light_position1,light_position2);
     ilu.matDiffuse(1.0, 1.0, 1.0, 1.0);
+    //glUniform1i(isLightSource, true);
     esfera.draw();
+    //glUniform1i(isLightSource, false);
     ilu.stdMaterial();
 }
 
@@ -642,8 +644,8 @@ void init()
 
     // Criar objetos de textura
     withTexture = glGetUniformLocation(program, "withTexture"); // Variável Booleana para aplicar textura!
-    BMPClass bmp; //<<<textura
-    BMPLoad("grama.bmp",bmp); //<<<textura
+    BMPClass bmp, bmp1; //<<<textura
+    BMPLoad("ladrilho.bmp",bmp); //<<<textura
 
     glGenTextures(1, &textura1); //<<<textura
     glBindTexture(GL_TEXTURE_2D, textura1); //<<<textura
@@ -651,15 +653,15 @@ void init()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
 
-    BMPLoad("test.bmp",bmp); //<<<textura
+    BMPLoad("grama.bmp",bmp1); //<<<textura
 
     glGenTextures(1, &textura2); //<<<textura
     glBindTexture(GL_TEXTURE_2D, textura2); //<<<textura
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,bmp.width,bmp.height,0,GL_RGB,GL_UNSIGNED_BYTE,bmp.bytes);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,bmp1.width,bmp1.height,0,GL_RGB,GL_UNSIGNED_BYTE,bmp1.bytes);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
 
-    BMPLoad("par.bmp",bmp); //<<<textura
+    BMPLoad("thumbnail.bmp",bmp); //<<<textura
 
     glGenTextures(1, &textura3); //<<<textura
     glBindTexture(GL_TEXTURE_2D, textura3); //<<<textura
