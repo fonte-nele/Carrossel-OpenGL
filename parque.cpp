@@ -6,13 +6,16 @@
  *       Victor Freitas                      17.2.4254
 */
 /** COMANDOS DE CONTROLE
- *       'w': deslocamento para frente de uma pessoa no parque.
- *       's': deslocamento para tras de uma pessoa no parque.
- *       'p': modo de visualizacao de uma camera situada em posicao elevada 
+ *       'd': camera em posicao default.
  *       'i': deslocamento para cima.
  *       'k': deslocamento para baixo.
  *       'j': deslocamento lateral para esquerda.
  *       'l': deslocamento lateral para direito.
+ *       'w': camera sobe.
+ *       's': camera desce.
+ *       'a': camera anda para frente (deslocamento horizontal).
+ *       'z': camera anda para tras (deslocamento horizontal).
+ *       'p': camera situada em posicao elevada 
  *       'c': acender/apagar luz poste das luminarias.
  */
 /*
@@ -33,7 +36,7 @@ using namespace std;
 #include "illumination.cpp"
 #include "BMPLoader.cpp" //<<<textura
 
-#define M_PI_2  3.14159265358979323846
+#define M_PI 3.14159265358979323846
 #define X 0
 #define Y 1
 #define Z 2
@@ -428,13 +431,6 @@ void lua(glm::vec4 pos, float r)
     esfera.draw();
     glUniform1i(isLightSource, false);
     glUniform1i(isMoon, false);
-
-    //ilu.lightPositions(light_position1,light_position2);
-    //ilu.matDiffuse(1.0, 1.0, 1.0, 1.0);
-    //glUniform1i(isLightSource, true);
-    //esfera.draw();
-    //glUniform1i(isLightSource, false);
-    //ilu.stdMaterial();
 }
 
 void luminarias(glm::mat4 posicao)
@@ -454,12 +450,19 @@ void luminarias(glm::mat4 posicao)
     matGlobo = glm::rotate(matGlobo, glm::radians(-90.0f), glm::vec3(1.0f,0.0f,0.0f));
     matGlobo = glm::scale(matGlobo, glm::vec3(1.5,1.5,1.5));
     glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(matGlobo));
-    if(!branco)
-      ilu.matDiffuse(1.0, 1.0, 0.0, 1.0);
-    else
+    if(!branco){  // Iluminacao do poste!
+      glUniform1i(isLightSource, true);
+    }
+    else{  // Poste com luz apagadas!
       ilu.matDiffuse(1.0, 1.0, 1.0, 1.0);
+    }
     esfera.draw();
-    ilu.stdMaterial();
+    if(!branco){
+      glUniform1i(isLightSource, false);
+    }
+    else{
+      ilu.stdMaterial();
+    }
 }
 
 void outdoor(glm::mat4 posicao)
@@ -526,140 +529,59 @@ void exibe( void )
 
 // ============================================= Camera ======================================================
 bool troca_camera;
-static glm::vec3 eye;
+static GLfloat pos[] = {0.0,10.0,50.0};
+static GLfloat alfa = 0.0;  // angulo de rotação da câmera em torno de Y
+                               // alfa=0.0 ==> câmera aponta para -z
+static GLfloat gama = 0.0;  // angulo de inclinacao vertical da direcao de observacao
 
 void camera(bool troca){
-    if(troca)
-        eye = glm::vec3(0.0,50.0,50.0);
-    else
-        eye = glm::vec3(0.0,10.0,50.0);
+    alfa = 0.0;
+    
+    if(troca){
+        pos[X] = 0.0, pos[Y] = 40.0, pos[Z] = 50.0;
+        gama = -0.45;
+    }
+    else{
+        pos[X] = 0.0, pos[Y] = 10.0, pos[Z] = 50.0;
+        gama = 0.0;
+    }
 }
 
-/*void posicionaCamera(unsigned char tecla) {
-   static float angCam = 0.0;   // giro da camera em torno da origem
-   float raioCam = 50.0;        // raio da circunferencia do movimento da camera
-   static float transCam = 1.0;
+void posicionaCamera(unsigned char tecla) 
+{   
+   static GLfloat dir[] = {0.0,0.0,-1.0}; // deslocamento horizontal!
+   GLfloat passo = 0.1;
    
-   glm::vec3 center(0.0,0.0,0.0);
-   glm::vec3 up(0.0,1.0,0.0);
    switch( tecla ) {
      case 'd': // camera em posicao default
-        eye = glm::vec3(0.0,10.0,raioCam);
-      break;
-     case 'j': // camera gira para a esquerda
-        angCam -= 1.0;
-      break;
-     case 'l':  // camera gira para a direita
-        angCam += 1.0;
-      break;
-     case 'i': // camera sobe
-        eye.y += 0.5;
-      break;
-     case 'k':  // camera desce
-        eye.y -= 0.5;
-      break;
-    case 'p': // troca posicao da camera
-        troca_camera = !troca_camera;
-        camera(troca_camera);
-        break;
-    case 'w': // camera anda para frente
-        transCam -= 2.5;
-        break;
-    case 's': // camera anda para tras
-        transCam += 2.5;
-        break;
-   }
-   // calcular posicao da camera no plano XZ
-   float angCamRad = glm::radians(angCam);
-   eye.x = sin(angCamRad)*raioCam;
-   eye.z = cos(angCamRad)*raioCam;
-
-   // calcular translacao da camera para frente e para tras
-   eye.x += transCam;
-   eye.z += transCam;   
-   glm::mat4 matVis = glm::lookAt(eye, center, up);
-   glUniformMatrix4fv(View,1,GL_FALSE, glm::value_ptr(matVis));
-   glutPostRedisplay();
-}*/
-
-void posicionaCamera(unsigned char tecla) {
-   static float angCam = 0.0;   // giro da camera em torno da origem
-   float raioCam = 50.0;        // raio da circunferencia do movimento da camera
-   static float transCam = 1.0;
-   static GLfloat pos[] = {0.0,10.0,50.0};
-   static GLfloat dir[] = {0.0,0.0,-1.0};
-   GLfloat passo= 0.1;
-   static GLfloat alfa = 0.0;  // angulo de rotação da câmera em torno de Y
-                               // alfa=0.0 ==> câmera aponta para -z
-   static GLfloat gama = 0.0;  // angulo de inclinacao vertical da direcao de observacao
-
-   
-   glm::vec3 center(0.0,0.0,0.0);
-   glm::vec3 up(0.0,1.0,0.0);
-   switch( tecla ) {
-     case 'd': // camera em posicao default
-        //eye = glm::vec3(0.0,10.0,raioCam);
-      break;
-     case 'i': pos[X] += passo*dir[X]; // camera anda para a frente
-               pos[Z] += passo*dir[Z];
+               pos[X] = 0.0, pos[Y] = 10.0, pos[Z] = 50.0;
                break;
-     case 'k': pos[X] -= passo*dir[X]; // camera anda para trás
-               pos[Z] -= passo*dir[Z];
+     case 'i': gama += 0.02;      // camera inclina para cima
+               break;
+     case 'k': gama -= 0.02;      // camera inclina para baixo
                break;
      case 'j': alfa += 0.02;      // camera gira para esquerda
                break;
      case 'l': alfa -= 0.02;      // camera gira para direita
                break;
-     case 'a': gama += 0.02;      // camera inclina para cima
+     case 'a': pos[X] += passo*dir[X]; // camera anda para a frente
+               pos[Z] += passo*dir[Z];
                break;
-     case 'z': gama -= 0.02;      // camera inclina para baixo
+     case 'z': pos[X] -= passo*dir[X]; // camera anda para trás
+               pos[Z] -= passo*dir[Z];
                break;
-     case 's': pos[Y] += passo*0.2;     // camera sobe
+     case 'w': pos[Y] += passo*0.2;     // camera sobe
                break;
-     case 'x': pos[Y] -= passo*0.2;     // camera desce
+     case 's': pos[Y] -= passo*0.2;     // camera desce
                break;
-     case 'p': // troca posicao da camera
-        troca_camera = !troca_camera;
-        camera(troca_camera);
-        break;
-     /*case 'j': // camera gira para a esquerda
-        angCam -= 1.0;
-      break;
-     case 'l':  // camera gira para a direita
-        angCam += 1.0;
-      break;
-     case 'i': // camera sobe
-        eye.y += 0.5;
-      break;
-     case 'k':  // camera desce
-        eye.y -= 0.5;
-      break;
-    case 'p': // troca posicao da camera
-        troca_camera = !troca_camera;
-        camera(troca_camera);
-        break;
-    case 'w': // camera anda para frente
-        transCam -= 2.5;
-        break;
-    case 's': // camera anda para tras
-        transCam += 2.5;
-        break;*/
+     case 'p': troca_camera = !troca_camera; // troca posicao da camera
+               camera(troca_camera);
+               break;
    }
-   if (tecla=='j' || tecla=='l') {
-     // vetor de direção mantido com módulo=1.0
-     // alfa = 0.0 coincide com -Z
-     dir[X] = cos(alfa+M_PI_2);
-     dir[Z] = sin(alfa-M_PI_2);
+   if (tecla=='j' || tecla=='l') {  // vetor de direção mantido com módulo=1.0
+     dir[X] = cos(alfa+M_PI); // alfa = 0.0 coincide com -Z
+     dir[Z] = sin(alfa-M_PI);
    }
-   // calcular posicao da camera no plano XZ
-  /*float angCamRad = glm::radians(angCam);
-   eye.x = sin(angCamRad)*raioCam;
-   eye.z = cos(angCamRad)*raioCam;
-
-   // calcular translacao da camera para frente e para tras
-   eye.x += transCam;
-   eye.z += transCam;   
-   glm::mat4 matVis = glm::lookAt(eye, center, up);*/
    glm::mat4 matVis;
    matVis = glm::rotate(matVis, -gama, glm::vec3(1.0f,0.0f,0.0f));
    matVis = glm::rotate(matVis, -alfa, glm::vec3(0.0f,1.0f,0.0f));
