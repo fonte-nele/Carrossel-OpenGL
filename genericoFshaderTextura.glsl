@@ -9,18 +9,23 @@ out vec4 fColor;
 uniform sampler2D texMap; //provê acesso a um objeto de textura //<<<textura
 uniform bool isLightSource; //<<<textura  // devido à textura, foi preciso transferir
                                           // do shader de vértices para cá
+uniform bool isMoon; // luz da lua
 uniform bool withTexture;
 
 void main()
 {
-    if (isLightSource) {
-      fColor = vec4(1.0f,1.0f,0.0f,1.0f);
+    if (isLightSource) 
+    {
+    	if(isMoon){
+    		fColor = vec4(1.0f,1.0f,1.0f,1.0f);
+    	}
+    	else{
+    		fColor = vec4(1.0f,1.0f,0.0f,1.0f);
+    	}
     }
     else if (withTexture)
        // combinar cor com textura
 	   fColor = texture(texMap, st) * color; //<<<textura
     else
        fColor = color;
-
 }
-
