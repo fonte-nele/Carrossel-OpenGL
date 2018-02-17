@@ -17,6 +17,9 @@
  *       'z': camera anda para tras (deslocamento horizontal).
  *       'p': camera situada em posicao elevada 
  *       'c': acender/apagar luz poste das luminarias.
+ *       'b': visao de um usuario do brinquedo, para sair dessa visao 'b' novamente.
+ *       '1': versao simplificada com outdoor carrossel.
+ *       '2': versao simplificada com outdoor skate.
  */
 /*
   Link do video para detalhamento do carrossel:
@@ -46,7 +49,7 @@ typedef glm::vec4  point4;
 
 GLuint Model, View, Projection, isLightSource, isMoon;
 GLuint program;
-GLuint textura1, textura2, textura3;  // Imagens com a textura carregada!
+GLuint textura1, textura2, textura3, textura4, textura5;  // Imagens com a textura carregada!
 GLuint withTexture; // Variavel booleana para aplicar textura!
 
 Cubo cubo;
@@ -60,6 +63,9 @@ static float movSkate=0.0;  // Controlar a ida e volta do skate
 static float altSkate=1.0;  // Controlar a altura do skate
 static int topo = 0;        // Controlar o momento certo da rotacao do skate
 static bool branco = false; // Cor do poste!
+static bool brinq = false;  // Visao do brinquedo!
+static bool tecla1 = false;  // Equipamento carrosel!
+static bool tecla2 = false;  // Equipamento skate!
 
 glm::vec4 light_position1(  50.0f, 12.0f, 0.0f, 1.0f );
 glm::vec4 light_position2( -50.0f, 12.0f, 0.0f, 1.0f );
@@ -82,9 +88,9 @@ void desenhaFonteDeLuz(glm::vec4 pos, float r)
 void cavalo(glm::mat4 M) {
     // Modelo com parte inferior do corpo (barriga) situada
     // em y=0.0, ou seja, no ch�o
-    // Matriz M: transforma��es para posicionar o cavalo
+    // Matriz M: transformacoes para posicionar o cavalo
 
-    //Dimens�es das partes do cavalo
+    //Dimensoes das partes do cavalo
     float xCorpo=1.5, yCorpo=1.0, zCorpo=0.5;
     float xPesc=0.3,  yPesc=0.6,  zPesc=0.2;  //pesco�o
     float xCab=0.5,   yCab=0.2,   zCab=0.2;   //cabe�a
@@ -113,7 +119,7 @@ void cavalo(glm::mat4 M) {
 
 void sustentacao(glm::mat4 posicao)
 {
-    // plataforma (placa de dimens�es 40x0.8x22, com face inferior em y=0.0)
+    // plataforma (placa de dimensoes 40x0.8x22, com face inferior em y=0.0)
     float altPlat=0.8;
     glm::mat4 matPlat(posicao);
     glUniform1i(withTexture, true);
@@ -328,7 +334,7 @@ void skate(glm::mat4 posicao)
     cubo.desenhar();
 
     float posX = -2.0, posZ = -1.5;
-    glm::mat4 matCadeira, rotCadeira(posicao);
+    glm::mat4 matCadeira, rotCadeira(posicao), inversa;
     for (int i = 0; i < 4; i++){
        matCadeira = glm::translate(rotCadeira, glm::vec3(posX,4.25,posZ));
        matCadeira = glm::translate(matCadeira, glm::vec3(movSkate,altSkate,0.0));
@@ -336,7 +342,13 @@ void skate(glm::mat4 posicao)
           matCadeira = glm::rotate(matCadeira, glm::radians(angulo), glm::vec3(0.0f,1.0f,0.0f));
        }
        matCadeira = glm::scale(matCadeira, glm::vec3(2.5,0.5,1.5));
-       glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(matCadeira));
+       if(brinq){
+          inversa = glm::inverse(matCadeira);
+          glUniformMatrix4fv(View,1,GL_FALSE, glm::value_ptr(inversa));
+       }
+       else{
+          glUniformMatrix4fv(Model,1,GL_FALSE, glm::value_ptr(matCadeira));
+       }
        cubo.desenhar();
 
         if(i == 0)
@@ -484,7 +496,12 @@ void outdoor(glm::mat4 posicao)
 
     glm::mat4 matPlaca;
     glUniform1i(withTexture, true);
-    glBindTexture(GL_TEXTURE_2D, textura3);
+    if(!tecla1 && !tecla2)
+        glBindTexture(GL_TEXTURE_2D, textura3);
+    else if(tecla1)
+        glBindTexture(GL_TEXTURE_2D, textura4);
+    else if(tecla2)
+        glBindTexture(GL_TEXTURE_2D, textura5);
     matPlaca = glm::translate(matPlaca, glm::vec3(-26.5,18.0,-35.0));
     matPlaca = glm::rotate(matPlaca, glm::radians(-90.0f), glm::vec3(1.0f,0.0f,0.0f));
     matPlaca = glm::scale(matPlaca, glm::vec3(21.0,0.5,12.0));
@@ -497,28 +514,39 @@ void exibe( void )
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
+    int pos[] = {1,2};  // Vetor de posicao!
+    float angulo[] = {-30.0, 10.0}; // Angulo de orientacao!
+    
     chao();
-    glm::mat4 posicaoCarrosel;
-    posicaoCarrosel = glm::translate(posicaoCarrosel, glm::vec3(0.0,0.0,-30.0));
-    carrossel(posicaoCarrosel);
+    
+    if(!tecla1 && !tecla2){
+        glm::mat4 posicaoCarrosel;
+        posicaoCarrosel = glm::translate(posicaoCarrosel, glm::vec3(0.0,0.0,angulo[0]));
+        carrossel(posicaoCarrosel);
 
-    glm::mat4 posicaoSkate;
-    posicaoSkate = glm::translate(posicaoSkate, glm::vec3(0.0,0.0,10.0)); // -30, 0, 0
-    sustentacao(posicaoSkate);
-    skate(posicaoSkate);
+        glm::mat4 posicaoSkate;
+        posicaoSkate = glm::translate(posicaoSkate, glm::vec3(0.0,0.0,angulo[1])); // -30, 0, 0
+        sustentacao(posicaoSkate);
+        skate(posicaoSkate);
 
-    glm::vec4 pos(20.0, 45.0, -70.0, 1.0);
-    lua(pos, 3.5);
+        glm::vec4 pos(20.0, 45.0, -70.0, 1.0);
+        lua(pos, 3.5);
 
-    glm::mat4 posLum;
-    posLum = glm::translate(posLum, glm::vec3(30.0,0.0,-35.0));
-    luminarias(posLum);
-    posLum = glm::translate(posLum, glm::vec3(-60.0,0.0,70.0));
-    luminarias(posLum);
+        glm::mat4 posLum;
+        posLum = glm::translate(posLum, glm::vec3(30.0,0.0,-35.0));
+        luminarias(posLum);
+        posLum = glm::translate(posLum, glm::vec3(-60.0,0.0,70.0));
+        luminarias(posLum);
 
-    glm::mat4 posOutdoor;
-    posOutdoor = glm::translate(posOutdoor, glm::vec3(-16.0,0.0,-35.0));
-    outdoor(posOutdoor);
+        glm::mat4 posOutdoor;
+        posOutdoor = glm::translate(posOutdoor, glm::vec3(-16.0,0.0,-35.0));
+        outdoor(posOutdoor);
+    }
+    else{
+        glm::mat4 posOutdoor;
+        posOutdoor = glm::translate(posOutdoor, glm::vec3(-16.0,0.0,-35.0));
+        outdoor(posOutdoor);
+    }
 
     desenhaFonteDeLuz(light_position1, 0.5);
     desenhaFonteDeLuz(light_position2, 0.5);
@@ -601,6 +629,21 @@ void teclado( unsigned char tecla, int x, int y )
               branco = true;
             else
               branco = false;
+        if(tecla == 'b')  // Entrar/sair da visao de um usuario do brinquedo! 
+            if(!brinq)
+              brinq = true;
+            else
+              brinq = false;
+        if(tecla == '1')  // Equipamento carrossel! 
+            if(!tecla1)
+              tecla1 = true;
+            else
+              tecla1 = false;
+        if(tecla == '2')  // Equipamento skate!
+            if(!tecla2)
+              tecla2 = true;
+            else
+              tecla2 = false;
         posicionaCamera(tecla);
     }
 }
@@ -687,7 +730,22 @@ void init()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
 
-    
+    BMPLoad("carrossel.bmp",bmp); //<<<textura
+
+    glGenTextures(1, &textura4); //<<<textura
+    glBindTexture(GL_TEXTURE_2D, textura4); //<<<textura
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,bmp.width,bmp.height,0,GL_RGB,GL_UNSIGNED_BYTE,bmp.bytes);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
+
+    BMPLoad("skate.bmp",bmp); //<<<textura
+
+    glGenTextures(1, &textura5); //<<<textura
+    glBindTexture(GL_TEXTURE_2D, textura5); //<<<textura
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,bmp.width,bmp.height,0,GL_RGB,GL_UNSIGNED_BYTE,bmp.bytes);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  //ou GL_LINEAR  //<<<textura
+
     GLuint tex_loc; //<<<textura
     tex_loc = glGetUniformLocation(program, "texMap"); //<<<textura
     glUniform1i(tex_loc, 0);
